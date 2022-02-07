@@ -3,5 +3,5 @@
 * Class Based API View
 *  Authentication
 *  Generic API View
-*  Mixins
 *  SQL(as database)
+*  Cache
