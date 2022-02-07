@@ -7,7 +7,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authentication import SessionAuthentication, BaseAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-
+from django.conf import settings
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
+from django.views.decorators.cache import cache_page
+from cookbook.services import get_recipes
 
 # Create your views here.
 class GenericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin,
@@ -18,29 +21,30 @@ class GenericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.Crea
     # authentication_classes = [SessionAuthentication, BaseAuthentication]
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
+    @cache_page(CACHE_TTL)
     def get(self, request, id=None):
         if id:
             return self.retrieve(request, id)
         else:
             return self.list(request)
-
+    @cache_page(CACHE_TTL)
     def post(self, request):
         return self.create(request)
-
+    @cache_page(CACHE_TTL)
     def put(self, request, id=None):
         return self.update(request, id)
-
+   
     def delete(self, request, id):
         return self.destroy(request, id)
 
 
 class ArticleAPIView(APIView):
+    @cache_page(CACHE_TTL)
     def get(self, request):
         articles = Article.objects.all()
         serializer = ArticleSerializer(articles, many=True)
         return Response(serializer.data)
-
+    @cache_page(CACHE_TTL)
     def post(self, request):
         serializer = ArticleSerializer(data=request.data)
 
@@ -55,13 +59,15 @@ class ArticleDetailView(APIView):
         try:
             return Article.objects.get(id=id)
         except Article.DoesNotExist:
-            return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+   return HttpResponse(status=status.HTTP_404_NOT_FOUND)
 
+    @cache_page(CACHE_TTL)
     def get(self, request, id):
         article = self.get_object(id)
         serializer = ArticleSerializer(article)
         return Response(serializer.data)
-
+     
+    @cache_page(CACHE_TTL)
     def put(self, request, id):
         article = self.get_object(id)
         serializer = ArticleSerializer(article, data=request.data)
